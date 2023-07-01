@@ -10,7 +10,7 @@ import static org.example.service.FileReader.getObjetos;
 import static org.example.util.Values.LIMITE_MOCHILA;
 import static org.example.util.Values.QUANTIDADE_ITENS;
 
-public class HybridArtificialBeeColonyKnapsack {
+public class ArtificialBeeColony_Hybrid_ED {
     private int colonySize;
     private int maxIterations;
     private int maxTrials;
@@ -24,11 +24,10 @@ public class HybridArtificialBeeColonyKnapsack {
     private Random random;
     private List<Bee> colony;
 
-    public static int MAX = 0;
 
-    public HybridArtificialBeeColonyKnapsack(int colonySize, int maxIterations, int maxTrials, double abandonProbability,
-                                             int numItems, int[] weights, int[] values, int maxWeight,
-                                             double deMutationFactor, double deCrossoverRate) {
+    public ArtificialBeeColony_Hybrid_ED(int colonySize, int maxIterations, int maxTrials, double abandonProbability,
+                                         int numItems, int[] weights, int[] values, int maxWeight,
+                                         double deMutationFactor, double deCrossoverRate) {
         this.colonySize = colonySize;
         this.maxIterations = maxIterations;
         this.maxTrials = maxTrials;
@@ -43,8 +42,8 @@ public class HybridArtificialBeeColonyKnapsack {
         this.colony = new ArrayList<>();
     }
 
-    public int[] optimize() {
-        initializeColony();
+    public int[] otimizar() {
+        inicializarColonia();
         Bee bestBee = getBestBee();
 
         for (int i = 0; i < maxIterations; i++) {
@@ -69,7 +68,7 @@ public class HybridArtificialBeeColonyKnapsack {
         return bestBee.getSolution();
     }
 
-    private void initializeColony() {
+    private void inicializarColonia() {
         for (int i = 0; i < colonySize; i++) {
             int[] solution = generateRandomSolution();
             double fitness = evaluateSolution(solution);
@@ -98,12 +97,9 @@ public class HybridArtificialBeeColonyKnapsack {
         }
 
         if (totalWeight > maxWeight) {
-            totalValue = 0; // Penalização se exceder o peso máximo
+            totalValue = 0; // zera se exceder o peso máximo
         }
-        System.out.println("TOTAL VALUE: " + totalValue);
-        if(totalValue>MAX){
-            MAX = totalValue;
-        }
+
         return totalValue;
     }
 
@@ -118,7 +114,10 @@ public class HybridArtificialBeeColonyKnapsack {
         }
     }
 
+    /** atualização das soluções com Evolução Diferencial  */
     private int[] generateDESolution(int[] currentSolution) {
+
+        /** obtendo as soluções mutantes a partir da solução aleatória gerado pela colônia*/
         int[] randomBeeSolution1 = getRandomBeeSolution();
         int[] randomBeeSolution2 = getRandomBeeSolution();
         int[] randomBeeSolution3 = getRandomBeeSolution();
@@ -196,46 +195,43 @@ public class HybridArtificialBeeColonyKnapsack {
     }
 
     public static void main(String[] args) {
-        int colonySize = 50;
-        int maxIterations = 100;
-        int maxTrials = 10;
-        double abandonProbability = 0.3; //0.3
-        double deMutationFactor = 0.5; //0.5
-        double deCrossoverRate = 0.7; //0.7
+        int qtdAbelhas = 50;
+        int maxIteracoes = 100;
+        int maxTentativas = 10;
+        double probabilidadeAbandono = 0.3; /** */
+        double fatorMutacaoED = 0.5; /** mutação para que o ED gere novas soluções */
+        double taxaCrossoverED = 0.7; /** taxa de crossover do ED*/
 
-//        int numItems = 10;
-//        int[] weights = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-//        int[] values = {10, 15, 20, 25, 30, 35, 40, 45, 50, 55};
-//        int maxWeight = 30;
+        int numItens = QUANTIDADE_ITENS;
+        int limiteMochila = LIMITE_MOCHILA.intValue();
+        int[] pesosItens = new int[QUANTIDADE_ITENS];
+        int[] valoresItens = new int[QUANTIDADE_ITENS];
 
-        int numItems = QUANTIDADE_ITENS;
-        int maxWeight = LIMITE_MOCHILA.intValue();
-        int[] weights = new int[QUANTIDADE_ITENS];
-        int[] values = new int[QUANTIDADE_ITENS];
+        int somaValues = 0;
+        int somaPesos = 0;
 
         /***/ long init = System.currentTimeMillis();
         List<Objeto> objetos = getObjetos();
         for (int i = 0; i < objetos.size(); i++) {
-            weights[i] = objetos.get(i).getPeso().intValue();
-            values[i] = objetos.get(i).getValorTotal().intValue();
+            pesosItens[i] = objetos.get(i).getPeso().intValue();
+            valoresItens[i] = objetos.get(i).getValorTotal().intValue();
         }
 
-        HybridArtificialBeeColonyKnapsack abcKnapsack = new HybridArtificialBeeColonyKnapsack(colonySize,
-                maxIterations, maxTrials, abandonProbability, numItems, weights, values, maxWeight,
-                deMutationFactor, deCrossoverRate);
+        ArtificialBeeColony_Hybrid_ED ABC_ED_mochila = new ArtificialBeeColony_Hybrid_ED(qtdAbelhas,
+                maxIteracoes, maxTentativas, probabilidadeAbandono, numItens, pesosItens, valoresItens, limiteMochila,
+                fatorMutacaoED, taxaCrossoverED);
 
-        int[] bestSolution = abcKnapsack.optimize();
+        int[] solucoesOtimas = ABC_ED_mochila.otimizar();
         /***/ long finish = System.currentTimeMillis();
 
         System.out.println("Best Solution:");
-        int somaValues = 0;
-        int somaPesos = 0;
 
-        for (int i = 0; i < numItems; i++) {
-            if (bestSolution[i] == 1) {
-                System.out.println("Item " + i + ": Weight = " + weights[i] + ", Value = " + values[i]);
-                somaValues += values[i];
-                somaPesos += weights[i];
+
+        for (int i = 0; i < numItens; i++) {
+            if (solucoesOtimas[i] == 1) {
+                System.out.println("Item " + i + ": Weight = " + pesosItens[i] + ", Value = " + valoresItens[i]);
+                somaValues += valoresItens[i];
+                somaPesos += pesosItens[i];
             }
         }
         System.out.println("Soma Total obtida \n--> Pesos: " + somaPesos + "\n --> Valores: " + somaValues);
